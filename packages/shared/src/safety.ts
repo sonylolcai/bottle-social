@@ -1,18 +1,14 @@
 export type SafetyCode =
-  | "EMPTY_TEXT"
-  | "TEXT_TOO_LONG"
+  | "TEXT_EMPTY"
+  | "TEXT_TOO_LONG_OVER_1200_CHARS"
   | "CONTAINS_URL"
   | "CONTAINS_EMAIL"
   | "CONTAINS_PHONE_NUMBER"
-  | "CONTAINS_EXACT_LOCATION"
+  | "CONTAINS_EXACT_LOCATION_PATTERN"
   | "CONTAINS_PAYMENT_HANDLE"
   | "CONTAINS_HIGH_RISK_KEYWORD";
 
 export type SafetyResult = { ok: true } | { ok: false; code: SafetyCode };
-
-export interface CheckTextSafetyOptions {
-  maxLength?: number;
-}
 
 const DEFAULT_MAX_LENGTH = 1200;
 
@@ -21,8 +17,7 @@ const URL_PATTERN =
 
 const EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
 
-const PHONE_PATTERN =
-  /(?:\+?\d{1,3}[\s.-]*)?(?:\(?\d{3}\)?[\s.-]*)\d{3}[\s.-]*\d{4}\b/;
+const PHONE_LIKE_PATTERN = /\+?\d[\d\s().-]{7,}\d/;
 
 const EXACT_LOCATION_PATTERNS = [
   /\bmy address is\b/i,
@@ -64,19 +59,28 @@ const HIGH_RISK_KEYWORDS = [
   "seed phrase"
 ];
 
+function containsPhoneLikeContact(text: string): boolean {
+  const match = text.match(PHONE_LIKE_PATTERN);
+  if (!match) {
+    return false;
+  }
+
+  const digitCount = match[0].replace(/\D/g, "").length;
+  return digitCount >= 9 && digitCount <= 14;
+}
+
 export function checkTextSafety(
   text: string,
-  options: CheckTextSafetyOptions = {}
+  maxLength = DEFAULT_MAX_LENGTH
 ): SafetyResult {
-  const maxLength = options.maxLength ?? DEFAULT_MAX_LENGTH;
   const normalizedText = text.trim();
 
   if (normalizedText.length === 0) {
-    return { ok: false, code: "EMPTY_TEXT" };
+    return { ok: false, code: "TEXT_EMPTY" };
   }
 
   if (normalizedText.length > maxLength) {
-    return { ok: false, code: "TEXT_TOO_LONG" };
+    return { ok: false, code: "TEXT_TOO_LONG_OVER_1200_CHARS" };
   }
 
   if (EMAIL_PATTERN.test(normalizedText)) {
@@ -87,12 +91,12 @@ export function checkTextSafety(
     return { ok: false, code: "CONTAINS_URL" };
   }
 
-  if (PHONE_PATTERN.test(normalizedText)) {
+  if (containsPhoneLikeContact(normalizedText)) {
     return { ok: false, code: "CONTAINS_PHONE_NUMBER" };
   }
 
   if (EXACT_LOCATION_PATTERNS.some((pattern) => pattern.test(normalizedText))) {
-    return { ok: false, code: "CONTAINS_EXACT_LOCATION" };
+    return { ok: false, code: "CONTAINS_EXACT_LOCATION_PATTERN" };
   }
 
   if (PAYMENT_HANDLE_PATTERNS.some((pattern) => pattern.test(normalizedText))) {
