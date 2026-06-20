@@ -1,0 +1,8 @@
+name = "drift-bottle-remote"
+main = "src/index.ts"
+compatibility_date = "2026-06-19"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "drift-bottle"
+database_id = "local-development-replace-on-deploy"
