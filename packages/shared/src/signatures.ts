@@ -25,6 +25,8 @@ type BufferLike = {
 };
 
 const encoder = new TextEncoder();
+const METHOD_PATTERN = /^[A-Za-z]+$/;
+const NEWLINE_PATTERN = /[\r\n]/;
 
 function getBuffer(): BufferLike | undefined {
   return (globalThis as typeof globalThis & { Buffer?: BufferLike }).Buffer;
@@ -79,14 +81,32 @@ async function sha256Base64(value: string): Promise<string> {
   return bytesToBase64(new Uint8Array(digest));
 }
 
+function assertNoNewlines(fieldName: string, value: string): void {
+  if (NEWLINE_PATTERN.test(value)) {
+    throw new Error(`${fieldName} must not contain newline characters`);
+  }
+}
+
+function normalizeMethod(method: string): string {
+  if (!METHOD_PATTERN.test(method)) {
+    throw new Error("method must contain only letters");
+  }
+
+  return method.toUpperCase();
+}
+
 async function createCanonicalMessage(input: {
   method: string;
   path: string;
   timestamp: string;
   body: string;
 }): Promise<string> {
+  assertNoNewlines("method", input.method);
+  assertNoNewlines("path", input.path);
+  assertNoNewlines("timestamp", input.timestamp);
+
   return [
-    input.method.toUpperCase(),
+    normalizeMethod(input.method),
     input.path,
     input.timestamp,
     await sha256Base64(input.body)
