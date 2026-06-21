@@ -53,11 +53,13 @@ const insertBottle = (
     status,
     content,
     rejectionCode = null,
+    createdAt = now,
   }: {
     id?: string;
     status: BottleStatus;
     content: string | null;
     rejectionCode?: string | null;
+    createdAt?: string;
   }
 ) => {
   db.prepare(`
@@ -65,7 +67,7 @@ const insertBottle = (
       id, sender_id, content, content_hash, language, status, rejection_code, created_at, expires_at
     )
     VALUES (?, 'sender', ?, ?, 'en', ?, ?, ?, ?)
-  `).run(id, content, `${id}-hash`, status, rejectionCode, now, now);
+  `).run(id, content, `${id}-hash`, status, rejectionCode, createdAt, createdAt);
 };
 
 const seedDelivery = (db: SqliteDatabase) => {
@@ -122,12 +124,14 @@ describe("initial D1 migration", () => {
         id: "delivered-with-content",
         status: "delivered",
         content: "already delivered",
+        createdAt: "2026-06-22T00:00:00.000Z",
       });
       expectRejected(() =>
         insertBottle(db, {
           id: "approved-without-content",
           status: "approved",
           content: null,
+          createdAt: "2026-06-23T00:00:00.000Z",
         })
       );
       expectRejected(() =>
@@ -135,6 +139,7 @@ describe("initial D1 migration", () => {
           id: "delivered-without-content",
           status: "delivered",
           content: null,
+          createdAt: "2026-06-24T00:00:00.000Z",
         })
       );
       expectRejected(() =>
@@ -142,18 +147,21 @@ describe("initial D1 migration", () => {
           id: "expired-with-content",
           status: "expired",
           content: "should be purged",
+          createdAt: "2026-06-25T00:00:00.000Z",
         })
       );
       insertBottle(db, {
         id: "expired-without-content",
         status: "expired",
         content: null,
+        createdAt: "2026-06-26T00:00:00.000Z",
       });
       expectRejected(() =>
         insertBottle(db, {
           id: "rejected-without-code",
           status: "rejected",
           content: null,
+          createdAt: "2026-06-27T00:00:00.000Z",
         })
       );
 
@@ -250,5 +258,38 @@ describe("initial D1 migration", () => {
     expect(migrationSql).toContain(
       "CREATE INDEX idx_audit_events_target_created_at ON audit_events(target_type, target_id, created_at);"
     );
+  });
+
+  test("enforces one bottle per sender per UTC day in the database", () => {
+    const db = createDatabase();
+
+    try {
+      insertBottle(db, {
+        id: "first-today",
+        status: "approved",
+        content: "first",
+      });
+
+      expect(() =>
+        insertBottle(db, {
+          id: "second-today",
+          status: "approved",
+          content: "second",
+        })
+      ).toThrow(/UNIQUE constraint failed|constraint failed/i);
+
+      db.prepare(`
+        INSERT INTO bottles (
+          id, sender_id, content, content_hash, language, status, rejection_code, created_at, expires_at
+        )
+        VALUES ('tomorrow', 'sender', 'tomorrow', 'tomorrow-hash', 'en', 'approved', NULL, ?, ?)
+      `).run("2026-06-22T00:00:00.000Z", "2026-06-25T00:00:00.000Z");
+
+      expect(
+        db.prepare("SELECT COUNT(*) AS count FROM bottles").get()
+      ).toMatchObject({ count: 2 });
+    } finally {
+      db.close();
+    }
   });
 });

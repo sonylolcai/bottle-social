@@ -91,5 +91,6 @@ CREATE INDEX idx_replies_to_user_status_expires_at ON replies(to_user_id, status
 CREATE INDEX idx_users_delivery_candidates ON users(language, status, is_adult);
 CREATE INDEX idx_bottles_status_language_expires_at ON bottles(status, language, expires_at);
 CREATE INDEX idx_bottles_sender_created_at ON bottles(sender_id, created_at);
+CREATE UNIQUE INDEX idx_bottles_sender_utc_day ON bottles(sender_id, substr(created_at, 1, 10));
 CREATE INDEX idx_reports_target ON reports(target_type, target_id);
 CREATE INDEX idx_audit_events_target_created_at ON audit_events(target_type, target_id, created_at);
