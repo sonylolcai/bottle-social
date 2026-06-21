@@ -430,4 +430,22 @@ export const registerRoutes = (app: App): void => {
 
     return c.json({ id });
   });
+
+  app.post("/v1/maintenance/expire", async (c) => {
+    const now = nowIso();
+
+    await c.env.DB.batch([
+      c.env.DB.prepare(
+        "UPDATE bottles SET content = NULL, status = 'expired' WHERE expires_at <= ? AND status IN ('approved', 'delivered')",
+      ).bind(now),
+      c.env.DB.prepare(
+        "UPDATE deliveries SET status = 'expired' WHERE expires_at <= ? AND status = 'available'",
+      ).bind(now),
+      c.env.DB.prepare(
+        "UPDATE replies SET content = NULL, status = 'expired' WHERE expires_at <= ? AND status IN ('available', 'pulled', 'reported')",
+      ).bind(now),
+    ]);
+
+    return c.json({ ok: true });
+  });
 };

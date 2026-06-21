@@ -507,4 +507,42 @@ describe("remote API routes", () => {
     expect(bottles?.count).toBe(0);
     expect(deliveries?.count).toBe(0);
   });
+
+  it("expires remote bottle and reply content through maintenance", async () => {
+    const sender = await createSignedUser(db, "sender");
+    const recipient = await createSignedUser(db, "recipient");
+
+    await submitBottle(db, sender, "This content should expire.");
+    const inboxResponse = await pullInbox(db, recipient);
+    const inbox = (await inboxResponse.json()) as { bottles: Array<{ bottleId: string; deliveryId: string }> };
+    const pulledBottle = inbox.bottles[0];
+    if (!pulledBottle) {
+      throw new Error("Expected one inbox bottle");
+    }
+
+    const replyResponse = await pullReply(db, recipient, pulledBottle.deliveryId, "This reply should expire.");
+    const reply = (await replyResponse.json()) as { id: string };
+
+    await db.prepare("UPDATE bottles SET expires_at = '2026-01-01T00:00:00.000Z' WHERE id = ?")
+      .bind(pulledBottle.bottleId)
+      .run();
+    await db.prepare("UPDATE replies SET expires_at = '2026-01-01T00:00:00.000Z' WHERE id = ?")
+      .bind(reply.id)
+      .run();
+
+    const response = await request(db, "/v1/maintenance/expire", { method: "POST" });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    const bottle = await db
+      .prepare("SELECT status, content FROM bottles WHERE id = ?")
+      .bind(pulledBottle.bottleId)
+      .first<{ status: string; content: string | null }>();
+    const expiredReply = await db
+      .prepare("SELECT status, content FROM replies WHERE id = ?")
+      .bind(reply.id)
+      .first<{ status: string; content: string | null }>();
+    expect(bottle).toEqual({ status: "expired", content: null });
+    expect(expiredReply).toEqual({ status: "expired", content: null });
+  });
 });
