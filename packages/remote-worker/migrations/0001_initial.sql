@@ -28,7 +28,12 @@ CREATE TABLE bottles (
   status TEXT NOT NULL CHECK (status IN ('rejected', 'approved', 'delivered', 'expired')),
   rejection_code TEXT,
   created_at TEXT NOT NULL,
-  expires_at TEXT NOT NULL
+  expires_at TEXT NOT NULL,
+  CONSTRAINT bottles_lifecycle CHECK (
+    (status IN ('approved', 'delivered') AND content IS NOT NULL)
+    OR (status = 'rejected' AND rejection_code IS NOT NULL)
+    OR status = 'expired'
+  )
 );
 
 CREATE TABLE deliveries (
@@ -47,13 +52,18 @@ CREATE TABLE replies (
   delivery_id TEXT NOT NULL REFERENCES deliveries(id),
   from_user_id TEXT NOT NULL REFERENCES users(id),
   to_user_id TEXT NOT NULL REFERENCES users(id),
-  content TEXT NOT NULL,
+  content TEXT,
   content_hash TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('rejected', 'available', 'pulled', 'expired', 'reported')),
   rejection_code TEXT,
   created_at TEXT NOT NULL,
   pulled_at TEXT,
-  expires_at TEXT NOT NULL
+  expires_at TEXT NOT NULL,
+  CONSTRAINT replies_lifecycle CHECK (
+    (status IN ('available', 'pulled', 'reported') AND content IS NOT NULL)
+    OR (status = 'rejected' AND rejection_code IS NOT NULL)
+    OR status = 'expired'
+  )
 );
 
 CREATE TABLE reports (
@@ -75,3 +85,10 @@ CREATE TABLE audit_events (
   result TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE INDEX idx_deliveries_recipient_status_expires_at ON deliveries(recipient_id, status, expires_at);
+CREATE INDEX idx_replies_to_user_status_expires_at ON replies(to_user_id, status, expires_at);
+CREATE INDEX idx_bottles_status_language_expires_at ON bottles(status, language, expires_at);
+CREATE INDEX idx_bottles_sender_created_at ON bottles(sender_id, created_at);
+CREATE INDEX idx_reports_target ON reports(target_type, target_id);
+CREATE INDEX idx_audit_events_target_created_at ON audit_events(target_type, target_id, created_at);
