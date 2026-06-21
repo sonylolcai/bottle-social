@@ -118,10 +118,22 @@ describe("initial D1 migration", () => {
         status: "approved",
         content: "hello",
       });
+      insertBottle(db, {
+        id: "delivered-with-content",
+        status: "delivered",
+        content: "already delivered",
+      });
       expectRejected(() =>
         insertBottle(db, {
           id: "approved-without-content",
           status: "approved",
+          content: null,
+        })
+      );
+      expectRejected(() =>
+        insertBottle(db, {
+          id: "delivered-without-content",
+          status: "delivered",
           content: null,
         })
       );
@@ -147,7 +159,7 @@ describe("initial D1 migration", () => {
 
       expect(
         db.prepare("SELECT COUNT(*) AS count FROM bottles").get()
-      ).toMatchObject({ count: 2 });
+      ).toMatchObject({ count: 3 });
     } finally {
       db.close();
     }
@@ -164,6 +176,30 @@ describe("initial D1 migration", () => {
         status: "available",
         content: "reply content",
       });
+      insertReply(db, {
+        id: "pulled-with-content",
+        status: "pulled",
+        content: "pulled reply content",
+      });
+      insertReply(db, {
+        id: "reported-with-content",
+        status: "reported",
+        content: "reported reply content",
+      });
+      expectRejected(() =>
+        insertReply(db, {
+          id: "pulled-without-content",
+          status: "pulled",
+          content: null,
+        })
+      );
+      expectRejected(() =>
+        insertReply(db, {
+          id: "reported-without-content",
+          status: "reported",
+          content: null,
+        })
+      );
       expectRejected(() =>
         insertReply(db, {
           id: "expired-with-content",
@@ -186,7 +222,7 @@ describe("initial D1 migration", () => {
 
       expect(
         db.prepare("SELECT COUNT(*) AS count FROM replies").get()
-      ).toMatchObject({ count: 2 });
+      ).toMatchObject({ count: 4 });
     } finally {
       db.close();
     }
