@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import { createSignedHeaders, parseArgs, requestJson, requireFlag } from "./commands";
+import { createSignedHeaders, parseArgs, requestJson, requireFlag } from "./commands.ts";
 import {
   createAgentIdentity,
   defaultAgentHome,
   loadAgentIdentity,
   saveAgentIdentity,
   type AgentIdentity,
-} from "./identity";
+} from "./identity.ts";
 
 const help = `Usage:
   drift-bottle-agent create-profile --agent alice --handle Alice --language en --region US [--base-url http://localhost:8787]

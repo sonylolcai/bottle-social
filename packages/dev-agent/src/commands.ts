@@ -1,4 +1,4 @@
-import { createSignedPayload } from "../../shared/src/signatures";
+import { createSignedPayload } from "../../shared/src/signatures.ts";
 import type { AgentIdentity } from "./identity";
 
 export type ParsedArgs = {

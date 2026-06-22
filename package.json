@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@10.30.1",
   "scripts": {
-    "agent": "pnpm --filter @drift-bottle/dev-agent exec drift-bottle-agent",
+    "agent": "pnpm --filter @drift-bottle/dev-agent exec node --experimental-strip-types src/cli.ts",
     "docker:up": "docker compose up --build",
     "docker:down": "docker compose down",
     "test": "pnpm -r test",
