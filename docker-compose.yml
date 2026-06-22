@@ -1,0 +1,13 @@
+services:
+  drift-bottle-remote:
+    build:
+      context: .
+    ports:
+      - "8787:8787"
+    volumes:
+      - drift_bottle_d1:/app/packages/remote-worker/.wrangler
+    environment:
+      CLOUDFLARE_ACCOUNT_ID: local
+
+volumes:
+  drift_bottle_d1:

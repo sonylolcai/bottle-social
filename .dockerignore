@@ -1,0 +1,7 @@
+node_modules
+.git
+.drift-bottle
+.wrangler
+packages/*/.wrangler
+outputs
+work

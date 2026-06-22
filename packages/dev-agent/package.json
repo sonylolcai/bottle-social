@@ -1,0 +1,20 @@
+{
+  "name": "@drift-bottle/dev-agent",
+  "type": "module",
+  "bin": {
+    "drift-bottle-agent": "src/cli.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@drift-bottle/local-mcp": "workspace:*",
+    "@drift-bottle/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

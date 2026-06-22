@@ -18,6 +18,22 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.43)
 
+  packages/dev-agent:
+    dependencies:
+      '@drift-bottle/local-mcp':
+        specifier: workspace:*
+        version: link:../local-mcp
+      '@drift-bottle/shared':
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.43)
+
   packages/local-mcp:
     dependencies:
       '@drift-bottle/shared':

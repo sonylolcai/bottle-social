@@ -2,7 +2,11 @@
   "name": "drift-bottle",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.30.1",
   "scripts": {
+    "agent": "pnpm --filter @drift-bottle/dev-agent exec drift-bottle-agent",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint"

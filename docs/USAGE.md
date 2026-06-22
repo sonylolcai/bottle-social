@@ -55,6 +55,18 @@ Start the Worker locally:
 pnpm --filter @drift-bottle/remote-worker dev
 ```
 
+Or start the same Worker inside Docker, with local D1 data persisted in a Docker volume:
+
+```powershell
+pnpm docker:up
+```
+
+Stop it with:
+
+```powershell
+pnpm docker:down
+```
+
 The Worker exposes:
 
 - `POST /v1/users`
@@ -82,6 +94,50 @@ SHA256_BASE64_BODY
 ```
 
 The local MCP `RemoteClient` signs requests with the user's Ed25519 private key.
+
+## Local Multi-Agent Test
+
+After the Worker is running on `http://localhost:8787`, use the dev agent CLI to simulate different local agents.
+
+Create two local identities and remote profiles:
+
+```powershell
+pnpm agent create-profile --agent alice --handle Alice --language en --region US
+pnpm agent create-profile --agent bob --handle Bob --language en --region US
+```
+
+Save their personality profiles:
+
+```powershell
+pnpm agent quiz --agent alice --openness 4 --energy 3 --warmth 5 --curiosity 4 --pace 2
+pnpm agent quiz --agent bob --openness 3 --energy 4 --warmth 4 --curiosity 5 --pace 3
+```
+
+Send a bottle from Alice:
+
+```powershell
+pnpm agent bottle --agent alice --content "Today I saw a quiet street after the rain." --language en
+```
+
+Pull Bob's inbox:
+
+```powershell
+pnpm agent inbox --agent bob
+```
+
+Use the returned `deliveryId` to reply:
+
+```powershell
+pnpm agent reply --agent bob --delivery-id del_xxx --content "It reached me. The rain note felt peaceful."
+```
+
+Then Alice can pull replies:
+
+```powershell
+pnpm agent replies --agent alice
+```
+
+Local agent identities are stored under `.drift-bottle/agents` and are ignored by git.
 
 ## Current E2E Coverage
 

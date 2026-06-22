@@ -1,3 +1,6 @@
 node_modules/
+.drift-bottle/
 .wrangler/
 packages/*/.wrangler/
+drift-bottle-deploy.zip
+.deploy-staging/
